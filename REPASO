@@ -1,0 +1,83 @@
+/*Usando Emple_depar:*/
+/*Ejercicio 1: Sacar un listado de los empleados con comisión que llevan trabajando en la empresa desde el año 2000 en la empresa*/
+SELECT *
+FROM empleados 
+WHERE comision IS NOT NULL AND fecha_alta >= "2000-01-01";
+/*Ejercicio 2: Muestra la edad de los empleados del departamento de contabilidad*/
+SELECT floor(datediff(curdate(), fecha_alta)/365) AS edad
+FROM empleados JOIN departamentos USING (dep_no)
+WHERE dnombre = 'CONTABILIDAD';
+/*Ejercicio 3: La media del salario de los empleados por departamentos que no tienen comisión*/
+SELECT dep_no, round(AVG(salario),0) AS MediaSalario
+FROM empleados
+WHERE IFNULL(comision,0)=0
+GROUP BY dep_no;
+/*Ejercicio 4: Empleados que ganen menos que cualquier empleado del departamento de ventas ordenado por salario*/
+SELECT apellido, salario
+FROM empleados
+WHERE salario < ALL(SELECT salario 	
+				 FROM empleados JOIN departamentos USING (dep_no)
+                 WHERE dnombre = 'ventas')
+ORDER BY salario;
+/*otra solucion*/
+SELECT apellido, salario
+FROM empleados
+WHERE salario < (SELECT MIN(salario) 	
+				 FROM empleados JOIN departamentos USING (dep_no)
+                 WHERE dnombre = 'ventas')
+ORDER BY salario;
+/*Ejercicio 5: ¿Que departamento, nombre del departamento, gasta mas en el sueldo de sus empleados?(Excluye al presidente)*/
+SELECT d.dnombre, sum(salario+ifnull(comision,0)) AS TOTALSUELDOS
+FROM empleados e JOIN departamentos d ON e.dep_no = d.dep_no
+WHERE oficio != 'PRESIDENTE'
+GROUP BY d.dep_no
+ORDER BY TOTALSUELDOS DESC LIMIT 1;
+/*-----------------------------------------------------------------------------------------------------------------------*/
+/*Usando gimnasio:*/
+/*Ejercicio 1: Listado de usuarios y actividades realizadas por estos, con sus nombres*/
+SELECT NUM_SOCIO, NOMBRE, APELLIDOS, a.CODIGO_ACTIVIDAD, a.DESCRIPCION
+FROM usuarios u JOIN actividades_usuarios au USING (NUM_SOCIO) JOIN actividades a USING (CODIGO_ACTIVIDAD);
+/*Ejercicio 2: Listar las actividades solicitadas por los socios y el numero de socios que la solicitan*/
+SELECT a.DESCRIPCION AS Actividad, COUNT(DISTINCT au.NUM_SOCIO) AS Numero_Socios
+FROM actividades_usuarios au JOIN actividades a ON au.CODIGO_ACTIVIDAD = a.CODIGO_ACTIVIDAD
+GROUP BY a.DESCRIPCION
+ORDER BY Numero_Socios DESC;
+/*Ejercicio 3: Listar los socios asociados que han pagado las cuotas por orden alfabético*/
+SELECT  u.NOMBRE AS Nombre_Usuario, u.APELLIDOS AS Apellidos_Usuario, p.NUM_SOCIO, p.NUMERO_MES, p.CUOTA
+FROM usuarios u
+JOIN pagos p ON u.NUM_SOCIO = p.NUM_SOCIO
+WHERE p.CUOTA > 0
+ORDER BY u.NOMBRE, u.APELLIDOS;
+/*Ejercicio 4: Listar los usuarios socios con el total de cuotas abonadas por cada uno*/
+SELECT NUM_SOCIO, NOMBRE, APELLIDOS, COUNT(p.CUOTA) as TotalCuotas
+FROM usuarios JOIN PAGOS p USING (NUM_SOCIO)
+GROUP BY NUM_SOCIO;
+/*Ejercicio 5: Muestra la actividad mas popular, es decir, la mas solicitada por los socios*/
+SELECT au.CODIGO_ACTIVIDAD, a.DESCRIPCION, COUNT(NUM_SOCIO) AS SociosApuntados
+FROM actividades_usuarios au JOIN actividades a USING (CODIGO_ACTIVIDAD)
+GROUP BY au.CODIGO_ACTIVIDAD
+ORDER BY SociosApuntados DESC LIMIT 1;
+/*------------------------------------------------------------------------------------------------------------------------------*/
+/*Usando la base de datos almacen:*/
+/*1. Listado de clientes y el vendedor que tiene asignado con sus nombres.*/
+SELECT COD_FABRICANTE, f.NOMBRE, NIF, t.NOMBRE
+FROM tiendas t JOIN pedidos USING (NIF) JOIN fabricantes f USING (COD_FABRICANTE)
+GROUP BY COD_FABRICANTE, f.NOMBRE, NIF, t.NOMBRE;
+/*2. Listar los productos que han sido pedidos por los clientes alguna vez.*/
+SELECT articulo
+FROM pedidos
+GROUP BY ARTICULO;
+/*3. Listar los nombres de los clientes que han hecho algún pedido en el año 2003*/
+SELECT DISTINCT t.NOMBRE AS Cliente
+FROM pedidos p
+JOIN tiendas t ON p.NIF = t.NIF
+WHERE YEAR(p.FECHA_PEDIDO) = 2003
+ORDER BY t.NOMBRE;
+/*4. Listar los clientes atendidos por vendedores de Madrid y que tienen límite de crédito superior a 5000.*/
+
+/*5. Muestra el producto más popular, es decir, el más pedido por los clientes.*/
+SELECT ARTICULO, SUM(UNIDADES_PEDIDAS) AS UnidadesVendidas 
+FROM pedidos 
+GROUP BY ARTICULO
+ORDER BY SUM(UNIDADES_PEDIDAS) DESC LIMIT 1;
+
