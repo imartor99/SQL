@@ -1,0 +1,100 @@
+/*1. Obtener los salarios medios agrupados por departamentos.*/
+SELECT dep_no, AVG(salario) AS salario_medio
+FROM empleados
+GROUP BY dep_no;
+/*2. Obtener cuántos empleados hay en cada departamento.*/
+SELECT dep_no, COUNT(*) AS numEmpleados
+FROM empleados
+GROUP BY dep_no;
+/*3. Seleccionar oficios con dos o más empleados.*/
+SELECT oficio, COUNT(*) AS total_empleados
+FROM empleados
+GROUP BY oficio
+HAVING COUNT(*) >= 2;
+/*4. Obtener el número de vendedores del departamento de ventas.*/
+SELECT COUNT(*) AS numVendedores
+FROM empleados
+WHERE oficio = 'Vendedor' AND dep_no = (
+    SELECT dep_no FROM departamentos WHERE dnombre = 'VENTAS'
+);
+/*5. Seleccionar oficios con dos o más empleados, cuyo salario supere 23000 €.*/
+SELECT oficio, COUNT(*) AS numEmpleados
+FROM empleados
+WHERE salario > 23000
+GROUP BY oficio
+HAVING COUNT(*) >= 2;
+/*6. Listar en orden alfabético aquellos empleados que no trabajan ni 
+en Madrid ni en Barcelona. (Número de empleado, apellido y número de departamento).*/
+SELECT emp_no, apellido, dep_no
+FROM empleados
+WHERE dep_no IN (
+    SELECT dep_no FROM departamentos WHERE localidad NOT IN ('MADRID', 'BARCELONA')
+)
+ORDER BY apellido ASC;
+/*7. Obtener toda la información de los empleados que ganan más que cualquier empleado de Barcelona.*/
+SELECT *
+FROM empleados e
+WHERE e.salario > (
+    SELECT MAX(e2.salario)
+    FROM empleados e2
+    JOIN departamentos d2 ON e2.dep_no = d2.dep_no
+    WHERE d2.localidad = 'BARCELONA'
+);
+/*8. Suma de salarios para cada oficio de los empleados del departamento de ventas.*/
+SELECT oficio, SUM(salario) AS total_salarios
+FROM empleados
+WHERE dep_no = (
+    SELECT dep_no FROM departamentos WHERE dnombre = 'VENTAS'
+)
+GROUP BY oficio;
+/*9. Obtener número de departamento y nombres de los departamentos en los que haya más de un empleado trabajando en ellos.*/
+SELECT d.dep_no, d.dnombre, COUNT(emp_no) numEmpleados
+FROM departamentos d
+JOIN empleados e ON d.dep_no = e.dep_no
+GROUP BY d.dep_no, d.dnombre
+HAVING numEmpleados > 1;
+/*10. Listar las localidades donde existan departamentos con empleados cuya comisión supere el 1% del salario.*/
+SELECT DISTINCT d.localidad
+FROM empleados e
+JOIN departamentos d ON e.dep_no = d.dep_no
+WHERE e.comision > e.salario * 0.01;
+/*11. Visualizar el departamento con más presupuesto asignado para pagar el salario y la comisión de sus empleados.*/
+SELECT d.dep_no, d.dnombre, SUM(e.salario + e.comision) AS presupuesto_total
+FROM empleados e 
+JOIN departamentos d ON e.dep_no = d.dep_no
+GROUP BY d.dep_no
+ORDER BY presupuesto_total DESC
+LIMIT 1;
+/*12. Visualizar los departamentos en los que el salario medio de sus empleados sea mayor o igual que la media de todos los salarios.*/
+SELECT d.dep_no, d.dnombre, AVG(e.salario) AS salario_medio
+FROM empleados e
+JOIN departamentos d ON e.dep_no = d.dep_no
+GROUP BY d.dep_no
+HAVING AVG(e.salario) >= (SELECT AVG(salario) FROM empleados);
+/*13. Obtener el empleado que mayor salario tiene dentro de cada oficio, excluyendo al presidente, ordenado por oficio.*/
+SELECT oficio, emp_no, apellido, salario
+FROM empleados
+WHERE oficio != 'PRESIDENTE'
+  AND (salario, oficio) IN (
+    SELECT MAX(salario), oficio
+    FROM empleados
+    WHERE oficio != 'PRESIDENTE'
+    GROUP BY oficio
+  )
+ORDER BY oficio;
+/*14. Obtener todos los empleados con el mismo oficio que el empleado que gana menos del departamento de VENTAS.(numero de empleado, apellido y oficio).*/
+SELECT e.emp_no, e.apellido, e.oficio
+FROM empleados e
+WHERE e.oficio = (
+    SELECT oficio
+    FROM empleados
+    WHERE dep_no = (SELECT dep_no FROM departamentos WHERE dnombre = 'VENTAS')
+    ORDER BY salario ASC
+    LIMIT 1
+);
+/*15. Obtener el código del departamento con más empleados y el número de los mismos.*/
+SELECT dep_no, COUNT(*) AS total_empleados
+FROM empleados
+GROUP BY dep_no
+ORDER BY total_empleados DESC
+LIMIT 1;
