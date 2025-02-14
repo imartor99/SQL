@@ -1,0 +1,98 @@
+/*1. Paises cuya densidad de Poblacion (población/superficie) supere
+los 100 habitantes por kilómetro cuadrado.*/
+SELECT Pais, (Poblacion / Superficie) AS Densidad
+FROM paises
+WHERE (Poblacion / Superficie) > 100;
+/*2. Los Paises anteriores, ordenados por la densidad de Poblacion.*/
+SELECT Pais, (Poblacion / Superficie) AS Densidad
+FROM paises
+WHERE (Poblacion / Superficie) > 100
+ORDER BY Densidad DESC;
+/*3. Idem, redondeando la densidad de Poblacion a 2 decimales.*/
+SELECT Pais, ROUND((Poblacion / Superficie), 2) AS Densidad
+FROM paises
+WHERE (Poblacion / Superficie) > 100
+ORDER BY Densidad DESC;
+/*4. Para cada país de Europa, sin mostrar el continente, obtener en
+otra columna la expresión 'Su capital es ' || Capital ||' y su
+religión ' || Religión. Se utiliza el operador || para concatenar
+cadenas.*/
+SELECT Pais, CONCAT('Su capital es ', Capital, ' y su religión ', Religion) AS Expresión
+FROM paises
+WHERE Continente = 'Europa';
+/*5. Para cada país de Asia y de África, mostrando el continente, obtener la expresión “Su
+superficie es XXXXXXX y su población YYYYYYY”.*/
+SELECT Pais, Continente, 
+       CONCAT('Su superficie es ', Superficie, ' y su población ', Poblacion) AS Expresión
+FROM paises
+WHERE Continente IN ('Asia', 'África');
+/*6. Obtener la población mundial.*/
+SELECT SUM(Poblacion) AS Poblacion_Mundial FROM paises;
+/*7. Población de África.*/
+SELECT SUM(Poblacion) AS Poblacion_Africa FROM paises WHERE Continente = 'África';
+/*8. Superficie de Asia.*/
+SELECT SUM(Superficie) AS Superficie_Asia FROM paises WHERE Continente = 'Asia';
+/*9. La media de la esperanza de vida.*/
+SELECT AVG(EsperVidaida) AS Media_Esperanza_Vida FROM paises;
+/*10. La media del PNB per cápita.*/
+SELECT AVG(PNBCapita) AS Media_PNB_Capita FROM paises;
+/*11. Obtener la media del PNB per cápita de los países de cada continente.*/
+SELECT Continente, AVG(PNBCapita) AS Media_PNB_Capita
+FROM paises
+GROUP BY Continente;
+/*12. Idem, redondeado a 2 decimales.*/
+SELECT Continente, ROUND(AVG(PNBCapita), 2) AS Media_PNB_Capita
+FROM paises
+GROUP BY Continente;
+/*13. Nº de países de cada una de las distintas lenguas.*/
+SELECT Lengua, COUNT(*) AS Num_Paises
+FROM paises
+GROUP BY Lengua;
+/*14. Nº de países que tiene cada continente.*/
+SELECT Continente, COUNT(*) AS Num_Paises
+FROM paises
+GROUP BY Continente;
+/*15. Nº de países de cada continente menos Europa y Asia.*/
+SELECT Continente, COUNT(*) AS Num_Paises
+FROM paises
+WHERE Continente NOT IN ('Europa', 'Asia')
+GROUP BY Continente;
+/*16. Países agrupados por religiones.*/
+SELECT Religion, GROUP_CONCAT(Pais SEPARATOR ', ') AS Paises
+FROM paises
+GROUP BY Religion;
+/*17. Nº de países de cada religión.*/
+SELECT Religion, COUNT(*) AS Num_Paises
+FROM paises
+GROUP BY Religion;
+/*18. Superficie total de cada continente.*/
+SELECT Continente, SUM(Superficie) AS Superficie_Total
+FROM paises
+GROUP BY Continente;
+/*19. Media de la superficie de los países de cada continente.*/
+SELECT Continente, AVG(Superficie) AS Media_Superficie
+FROM paises
+GROUP BY Continente;
+/*20. Para cada continente, nº de países cuya superficie es mayor de 20000.*/
+SELECT Continente, COUNT(*) AS Num_Paises
+FROM paises
+WHERE Superficie > 20000
+GROUP BY Continente;
+/*21. Para cada continente, suma de la población de aquellos países que tienen una superficie
+mayor de 100000.*/
+SELECT Continente, SUM(Poblacion) AS Poblacion_Total
+FROM paises
+WHERE Superficie > 100000
+GROUP BY Continente;
+/*22. Nº de países de cada continente que tienen una superficie < 1000, mostrando sólo aquellos
+cuyo resultado en número de países es mayor que 5.*/
+SELECT continente, COUNT(Pais)
+FROM paises
+WHERE Superficie < 1000
+GROUP BY continente
+HAVING COUNT(pais)>5;
+/*23. Para cada continente y para cada religión , indicar el número de países.*/
+SELECT Continente, Religion, COUNT(*) AS Num_Paises
+FROM paises
+GROUP BY Continente, Religion
+ORDER BY Continente, Num_Paises DESC;
