@@ -1,0 +1,29 @@
+/*1. Crear los usuarios ’tesorero’ y ‘habitante’. El primero puede acceder a todas las tablas,
+pero el segundo sólo a cuentas.*/
+CREATE USER 'tesorero'@'%' IDENTIFIED BY '1234';
+GRANT ALL PRIVILEGES ON personal.* TO 'tesorero'@'%';
+
+CREATE USER 'habitante'@'%' IDENTIFIED BY '1234';
+GRANT SELECT, INSERT, UPDATE, DELETE ON personal.cuentas TO 'habitante'@'%';
+
+/*2. Crear otro usuario llamado ‘invitado’ que sólo puede insertar datos en la tabla dvds (no
+puede leer, por ejemplo). Comprobar también que no tiene acceso a cuentas.*/
+CREATE USER 'invitado'@'%' IDENTIFIED BY '1234';
+GRANT INSERT ON personal.dvds TO 'invitado'@'%';
+
+/*3. Ante la sospecha de que los permisos están mal configurados, revocar todos los
+privilegios a todos los usuarios excepto a root.*/
+REVOKE ALL PRIVILEGES, GRANT OPTION FROM 'tesorero'@'%';
+REVOKE ALL PRIVILEGES, GRANT OPTION FROM 'habitante'@'%';
+REVOKE ALL PRIVILEGES, GRANT OPTION FROM 'invitado'@'%';
+FLUSH PRIVILEGES;
+
+/*4. ¿Desde dónde se podían conectar los usuarios?*/
+/*Desde cualquier dirección IP.*/
+
+/*5. Crear un usuario invitado2 que sólo tenga acceso para lectura (SELECT) a la columna
+‘concepto’ de la tabla cuentas y solamente conectándose desde el ordenador local*/
+CREATE USER 'invitado2'@'localhost' IDENTIFIED BY '1234';
+GRANT SELECT (concepto) ON personal.cuentas TO 'invitado2'@'localhost';
+
+FLUSH PRIVILEGES;
