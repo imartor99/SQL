@@ -1,0 +1,89 @@
+/*z. Visualizar todas las asignaturas que tengan tres letras ‘o’ en su nombre y tengan alumnos de Madrid.*/
+SELECT ASI.*
+FROM notas n JOIN alumnos a ON a.dni=n.dni JOIN asignaturas ASI USING(COD)
+WHERE pobla = 'MADRID' AND ASI.NOMBRE LIKE '%O%O%O%';
+
+/*BB. Nombre de los alumnos matriculados en FOL*/
+SELECT APENOM
+FROM notas n JOIN alumnos a USING(DNI) JOIN asignaturas ASI USING(COD)
+WHERE ASI.NOMBRE = 'FOL';
+
+/*LISTAR LOS ALUMNOS QUE TIENEN TODAS SUS ASIGNATURAS APROBADAS*/
+SELECT apenom
+FROM alumnos 
+WHERE dni NOT IN (SELECT DNI
+				  FROM notas
+                  WHERE nota <5);
+				
+/*OTRAS SOLUCIONES*/
+SELECT APENOM
+FROM ALUMNOS A JOIN NOTAS N USING (DNI)
+GROUP BY A.DNI
+HAVING MIN(NOTA)>=5;
+
+SELECT APENOM
+FROM ALUMNOS A
+WHERE 5 <= ALL(SELECT NOTA FROM NOTAS N WHERE A.DNI=N.DNI);
+
+/*ALUMNOS QUE TODAS SUS NOTAS ESTEN DEBAJO DE 6*/
+SELECT APENOM
+FROM ALUMNOS A
+WHERE  6 > ALL(SELECT NOTA FROM NOTAS N WHERE A.DNI=N.DNI);
+
+/*ALUMNOS QUE NO ESTEN MATRICULADOS EN FOL*/
+SELECT APENOM 
+FROM ALUMNOS 
+WHERE APENOM NOT IN (SELECT APENOM
+					 FROM ALUMNOS A JOIN NOTAS N USING (DNI) JOIN ASIGNATURAS USING (COD)
+					 WHERE NOMBRE = 'FOL');
+
+SELECT APENOM 
+FROM ALUMNOS 
+WHERE APENOM NOT IN (SELECT APENOM
+					 FROM ALUMNOS A JOIN NOTAS N USING (DNI) JOIN ASIGNATURAS USING (COD)
+					 WHERE NOMBRE = 'FOL');
+                     
+SELECT APENOM 
+FROM ALUMNOS A
+WHERE NOT EXISTS (SELECT DNI
+					 FROM NOTAS N
+					 WHERE A.DNI=N.DNI AND COD = (SELECT COD
+												  FROM ASIGNATURAS
+                                                  WHERE NOMBRE = 'FOL'));                     
+                     
+/*Visualizar los nombres de los alumnos aprobados en FOL.*/
+SELECT APENOM 
+FROM ALUMNOS 
+WHERE DNI  IN (SELECT DNI
+				  FROM NOTAS
+                  WHERE NOTA >5 AND COD IN (SELECT COD 
+											FROM ASIGNATURAS
+                                            WHERE NOMBRE = 'FOL'));
+                                            
+SELECT APENOM
+FROM ALUMNOS JOIN NOTAS USING (DNI) JOIN ASIGNATURAS USING (COD)
+WHERE NOTA > 5 AND NOMBRE = 'FOL';
+                                            
+/*ALUMNOS DE MADRID QUE TIENEN ALGUN SUSPENSO*/
+SELECT APENOM
+FROM ALUMNOS A
+WHERE POBLA='MADRID' AND DNI IN (SELECT DNI
+			  FROM NOTAS
+              WHERE NOTA < 5);
+
+SELECT APENOM
+FROM ALUMNOS A
+WHERE POBLA='MADRID' AND EXISTS (SELECT DNI
+					 FROM NOTAS N
+					 WHERE A.DNI=N.DNI AND NOTA <5 );
+       
+/*ASIGNATURAS QUE NO TIENEN SUSPENSOS*/       
+SELECT NOMBRE 
+FROM ASIGNATURAS JOIN NOTAS USING (COD)
+WHERE NOTA > 5 AND dni NOT IN (SELECT DNI
+				  FROM notas
+                  WHERE nota <5);
+                     
+
+                  
+
