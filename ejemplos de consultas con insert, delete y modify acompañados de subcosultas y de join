@@ -1,0 +1,40 @@
+1. INSERT con subconsulta y JOIN
+Agregamos nuevos registros a una tabla basándonos en una subconsulta con JOIN.
+
+INSERT INTO empleados_historico (empleado_id, nombre, puesto, fecha_registro)
+SELECT e.id, e.nombre, e.puesto, CURRENT_DATE
+FROM empleados e
+JOIN departamentos d ON e.departamento_id = d.id
+WHERE d.nombre = 'Recursos Humanos';
+Explicación:
+
+Se insertan registros en empleados_historico.
+Los datos provienen de la tabla empleados con un JOIN a departamentos.
+Solo se insertan empleados del departamento de "Recursos Humanos".
+
+2. DELETE con subconsulta y JOIN
+Eliminamos registros de una tabla basándonos en una condición extraída con una subconsulta y JOIN.
+
+DELETE FROM empleados
+WHERE id IN (
+    SELECT e.id
+    FROM empleados e
+    JOIN departamentos d ON e.departamento_id = d.id
+    WHERE d.nombre = 'Finanzas'
+);
+Explicación:
+
+Se eliminan empleados cuyo departamento es "Finanzas".
+Se usa una subconsulta para obtener los id de estos empleados.
+
+3. UPDATE con subconsulta y JOIN
+Actualizamos registros en una tabla utilizando información de otra tabla mediante una subconsulta y un JOIN.
+
+UPDATE empleados e
+JOIN salarios s ON e.id = s.empleado_id
+SET e.sueldo = s.sueldo_nuevo
+WHERE e.puesto = 'Desarrollador';
+Explicación:
+
+Se actualiza el sueldo de los empleados cuyo puesto es "Desarrollador".
+Se usa un JOIN con la tabla salarios para obtener el nuevo sueldo.
