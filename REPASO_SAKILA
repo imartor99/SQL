@@ -1,0 +1,179 @@
+/*Listar todos los actores.*/
+SELECT *
+FROM actor;
+/*Obtener los títulos de todas las películas.*/
+SELECT TITLE
+FROM FILM;
+/*Mostrar los clientes que viven en Canadá.*/
+SELECT CUSTOMER_ID, FIRST_NAME, LAST_NAME
+FROM customer JOIN country USING (LAST_UPDATE)
+WHERE COUNTRY = 'Canada';
+/*Obtener los nombres y apellidos de los clientes activos.*/
+SELECT CUSTOMER_ID, FIRST_NAME, LAST_NAME, active
+FROM customer 
+WHERE active = 1 ;
+
+/*Consultas con JOIN*/
+/*Listar todas las películas y sus categorías.*/
+SELECT film_id, title, c.name
+FROM film f JOIN film_category USING (FILM_ID) JOIN CATEGORY c USING (CATEGORY_ID);
+/*Obtener el nombre de los clientes y la cantidad de alquileres que han realizado.*/
+SELECT c.FIRST_NAME, c.LAST_NAME, COUNT(RENTAL_ID) AS NumAlquileres
+FROM CUSTOMER c JOIN RENTAL r USING (CUSTOMER_ID)
+GROUP BY c.first_name, c.last_name;
+/*Mostrar las películas alquiladas por un cliente específico (ejemplo. MARY SMITH).*/
+SELECT f.FILM_ID, TITLE
+FROM FILM f JOIN CUSTOMER C USING (LAST_UPDATE)
+WHERE C.FIRST_NAME = 'MARY' AND C.LAST_NAME = 'SMITH';
+
+/*Consultas con funciones y agrupaciones*/
+/*Obtener la cantidad total de películas en la tienda.*/
+SELECT SUM(FILM_ID) AS TOTALPELICULAS, STORE_ID AS NUM_TIENDA
+FROM INVENTORY i JOIN STORE s USING (STORE_ID)
+GROUP BY STORE_ID;
+/*Listar las 5 películas más alquiladas.*/
+SELECT i.film_id, f.title, COUNT(r.rental_id) AS num_alquileres
+FROM rental r
+JOIN inventory i ON r.inventory_id = i.inventory_id
+JOIN FILM f USING(film_id)
+GROUP BY i.film_id
+ORDER BY num_alquileres DESC
+LIMIT 5;
+/*Obtener el ingreso total generado por alquileres.*/
+SELECT SUM(AMOUNT) AS INGRESO_TOTAL, r.RENTAL_ID 
+FROM PAYMENT p JOIN RENTAL r USING (RENTAL_ID)
+GROUP BY RENTAL_ID;
+ /*Obtener categorías con más de 50 películas.*/
+ SELECT C.NAME, COUNT(F.FILM_ID) AS TOTAL_PELICULAS
+ FROM CATEGORY C JOIN FILM_CATEGORY FC USING (CATEGORY_ID) JOIN FILM F USING (FILM_ID)
+ GROUP BY C.NAME
+ HAVING TOTAL_PELICULAS > 50;
+/*Listar actores con más de 10 películas.*/
+SELECT A.FIRST_NAME, A.LAST_NAME
+FROM ACTOR A JOIN FILM_ACTOR FC USING (ACTOR_ID) 
+GROUP BY A.FIRST_NAME, A.LAST_NAME
+HAVING COUNT(FILM_ID) >10;
+/*Mostrar actores que han participado en más de 20 películas.*/
+SELECT A.FIRST_NAME, A.LAST_NAME
+FROM ACTOR A JOIN FILM_ACTOR FC USING (ACTOR_ID) 
+GROUP BY A.FIRST_NAME, A.LAST_NAME
+HAVING COUNT(FILM_ID) > 20;
+/*Mostrar clientes que han gastado más de $100 en pagos.*/
+SELECT R.CUSTOMER_ID
+FROM RENTAL R JOIN PAYMENT P USING (RENTAL_ID)
+GROUP BY CUSTOMER_ID
+HAVING SUM(AMOUNT) > 100;
+
+SELECT c.customer_id, c.first_name, c.last_name
+FROM rental r
+JOIN payment p ON r.rental_id = p.rental_id
+JOIN customer c ON r.customer_id = c.customer_id
+GROUP BY c.customer_id, c.first_name, c.last_name
+HAVING SUM(p.amount) > 100;
+
+/*Listar categorías de películas con un promedio de duración mayor a 120 minutos.*/
+SELECT C.NAME
+FROM CATEGORY C JOIN FILM_CATEGORY FC USING (CATEGORY_ID) JOIN FILM F USING (FILM_ID)
+GROUP BY C.NAME
+HAVING AVG(LENGTH) > 120;
+
+/*Composición Externa (OUTER JOIN)*/
+/*Listar todos los clientes y sus alquileres (incluyendo clientes que no han alquilado nada).*/
+SELECT C.FIRST_NAME, C.LAST_NAME, R.RENTAL_ID, R.RENTAL_DATE
+FROM CUSTOMER C LEFT JOIN RENTAL R ON C.CUSTOMER_ID = R.CUSTOMER_ID;
+/*Mostrar todas las películas y si han sido alquiladas o no.*/
+SELECT f.film_id, f.title
+FROM film f
+LEFT JOIN inventory i ON f.film_id = i.film_id
+LEFT JOIN rental r ON i.inventory_id = r.inventory_id
+GROUP BY f.film_id, f.title
+ORDER BY f.title;
+/*Mostrar empleados (staff) y las ventas que han generado (incluyendo aquellos sin ventas).*/
+SELECT S.STAFF_ID, S.FIRST_NAME, S.LAST_NAME, P.AMOUNT
+FROM STAFF S LEFT JOIN PAYMENT P USING (STAFF_ID);
+
+SELECT s.staff_id, s.first_name, s.last_name, 
+       IFNULL(SUM(p.amount), 0) AS total_ventas /*IFNULL CONVIERTE LOS VALORES NULL DE AMOUNT A 0*/
+FROM staff s
+LEFT JOIN rental r ON s.staff_id = r.staff_id
+LEFT JOIN payment p ON r.rental_id = p.rental_id
+GROUP BY s.staff_id, s.first_name, s.last_name
+ORDER BY total_ventas DESC;
+/*Mostrar películas y la cantidad de veces que han sido alquiladas (incluyendo las que nunca han sido alquiladas).*/
+SELECT F.FILM_ID, F.TITLE, IFNULL(SUM(RENTAL_ID),0) AS NUM_ALQUILERES
+FROM FILM F LEFT JOIN INVENTORY I USING (FILM_ID) LEFT JOIN RENTAL R USING (INVENTORY_ID)
+GROUP BY F.FILM_ID, F.TITLE
+ORDER BY NUM_ALQUILERES DESC;
+/*Mostrar clientes y las tiendas donde compraron o indicar "Sin compras" si no han hecho ninguna.*/
+SELECT C.CUSTOMER_ID, C.FIRST_NAME, C.LAST_NAME, COALESCE(CONCAT('Tienda ', S.STORE_ID), 'Sin compras') AS TIENDAS
+FROM CUSTOMER C LEFT JOIN STORE S USING (STORE_ID) 
+ORDER BY C.CUSTOMER_ID;
+
+/*Subconsultas con operadores ALL, ANY, IN, EXISTS*/
+/*Usando IN → Listar clientes que han realizado un pago.*/
+SELECT C.CUSTOMER_ID, C.FIRST_NAME, C.LAST_NAME
+FROM CUSTOMER C 
+WHERE CUSTOMER_ID IN (SELECT DISTINCT CUSTOMER_ID 
+					  FROM PAYMENT);
+/*Usando EXISTS → Mostrar películas que han sido alquiladas al menos una vez.*/
+SELECT FILM_ID, TITLE 
+FROM FILM F
+WHERE EXISTS (SELECT 1
+			  FROM INVENTORY I JOIN RENTAL R USING (INVENTORY_ID)
+              WHERE I.FILM_ID = F. FILM_ID);
+/*Usando ANY → Mostrar películas con duración mayor a alguna de las películas en la categoría "Animation".*/
+SELECT F.FILM_ID, F.TITLE
+FROM FILM F
+WHERE LENGTH > ANY(SELECT length
+				FROM FILM F2 JOIN FILM_CATEGORY FC USING (FILM_ID) JOIN CATEGORY C USING (CATEGORY_ID)
+                WHERE C.NAME = 'ANIMATION');
+/*Usando ALL → Listar películas más largas que todas las películas de la categoría "Action".*/
+SELECT F.FILM_ID, F.TITLE
+FROM FILM F
+WHERE LENGTH > ALL(SELECT length
+				FROM FILM F2 JOIN FILM_CATEGORY FC USING (FILM_ID) JOIN CATEGORY C USING (CATEGORY_ID)
+                WHERE C.NAME = 'ACTION');
+/*Usando IN → Listar clientes que han alquilado películas en más de una tienda.*/
+SELECT C.CUSTOMER_ID, C.FIRST_NAME, C.LAST_NAME
+FROM CUSTOMER C 
+WHERE C.CUSTOMER_ID IN (SELECT CUSTOMER_ID
+						FROM RENTAL R JOIN INVENTORY I USING (INVENTORY_ID)
+                        JOIN STORE S USING (STORE_ID)
+                        GROUP BY CUSTOMER_ID
+                        HAVING COUNT(DISTINCT S.STORE_ID) > 1);
+/*Usando EXISTS → Mostrar películas que no han sido alquiladas.*/
+SELECT F.FILM_ID, F.TITLE 
+FROM FILM F
+WHERE NOT EXISTS (SELECT 1
+				  FROM INVENTORY I JOIN RENTAL R USING (INVENTORY_ID)
+                  WHERE I.FILM_ID = F.FILM_ID);
+/*Usando ANY → Listar clientes que han gastado más que cualquier cliente con ID menor a 10.*/
+SELECT C.CUSTOMER_ID, C.FIRST_NAME, C.LAST_NAME, SUM(P.AMOUNT) AS TOTAL_GASTADO
+FROM CUSTOMER C 
+JOIN PAYMENT P USING (CUSTOMER_ID)
+GROUP BY C.CUSTOMER_ID, C.FIRST_NAME, C.LAST_NAME
+HAVING SUM(P.AMOUNT) > ANY (
+    SELECT SUM(P2.AMOUNT)
+    FROM PAYMENT P2
+    WHERE P2.CUSTOMER_ID < 10
+    GROUP BY P2.CUSTOMER_ID
+);
+
+/*Usando ALL → Listar películas con precio mayor al precio de todas las películas en la categoría "Comedy".*/
+SELECT F.FILM_ID, F.TITLE
+FROM FILM F 
+WHERE RENTAL_RATE > ALL(SELECT RENTAL_RATE
+						FROM FILM F2 JOIN FILM_CATEGORY FC USING (FILM_ID)
+                        JOIN CATEGORY C USING (CATEGORY_ID)
+                        WHERE C.NAME = 'COMEDY');
+                        
+SELECT f.film_id, f.title, f.rental_rate
+FROM film f
+WHERE f.rental_rate > ALL (
+    SELECT rental_rate
+    FROM film
+    JOIN film_category fc ON film.film_id = fc.film_id
+    JOIN category c ON fc.category_id = c.category_id
+    WHERE c.name = 'Comedy'
+);
+                        
