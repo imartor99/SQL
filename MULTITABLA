@@ -1,0 +1,153 @@
+/*1. Nombre y precio (por artículo) de todos los productos que se encuentran en algún pedido,
+ordenado por precio del artículo.*/
+SELECT nombre, a.precio
+FROM articulos a JOIN detalles d USING (codarticulo) JOIN pedidos p USING (numpedido)
+ORDER BY a.precio;
+/*2. Nombre , precio (por artículo), cantidad pedida e importe total de todos los productos que se
+encuentran en algún pedido, ordenado por precio total en el pedido.*/
+SELECT a.nombre, a.precio, d.cantidad, SUM(a.precio * d.cantidad) AS precioTotal
+FROM articulos a JOIN detalles d USING (codarticulo) JOIN pedidos p USING (numpedido)
+GROUP BY a.nombre, a.precio, d.cantidad
+ORDER BY precioTotal DESC;
+/*3. Producto de mayor precio en cada pedido.*/
+SELECT p.numpedido, a.nombre, a.precio
+FROM pedidos p
+JOIN detalles d USING (numpedido) JOIN articulos a USING (codarticulo)
+WHERE (d.numpedido, a.precio) IN (SELECT d2.numpedido, MAX(a2.precio)
+								  FROM detalles d2 JOIN articulos a2 USING (codarticulo)
+								  GROUP BY d2.numpedido);
+/*4. Nombre de los clientes que han hecho algún pedido*/
+SELECT nombre, apellido
+FROM clientes c JOIN pedidos p ON c.idcliente = p.idcliente;
+/*5. Nombre de los clientes que no han hecho ningún pedido*/
+SELECT nombre, apellido
+FROM clientes c JOIN pedidos p ON c.idcliente = p.idcliente
+WHERE c.idcliente NOT IN (SELECT nombre, apellido
+						FROM clientes c 
+                        JOIN pedidos p ON c.idcliente = p.idcliente);
+/*6. Número de pedido e importe total de cada pedido.*/
+SELECT p.numpedido, SUM(a.precio * d.cantidad) AS importeTotal
+FROM pedidos p JOIN detalles d USING (numpedido) JOIN articulos a USING (codarticulo)
+GROUP BY numpedido;
+/*7. Clientes de Madrid que han hecho algún pedido. (realizarlo con subconsulta y con composición de
+tablas*/
+SELECT nombre, apellido
+FROM clientes c JOIN pedidos p ON c.idcliente = p.idcliente
+WHERE poblacion = 'MADRID';
+/*8. Nombre y apellidos y dirección completa de los clientes de Madrid con el siguiente formato :
+“Pedro Pérez con dirección en calle del menhir, 44500 Madrid”*/
+SELECT CONCAT(nombre, ' ', apellido, ' con dirección en ', direccion, ', ', codpostal, ' ', poblacion) AS direcciones
+FROM clientes
+WHERE poblacion = 'MADRID';
+/*9. Visualizar en mayúscula los nombres y apellidos de los clientes de Madrid en mayúsculas.*/
+SELECT UPPER(nombre) AS nombre_mayusculas, UPPER(apellido) AS apellido_mayusculas
+FROM clientes
+WHERE poblacion = 'Madrid';
+
+/*11. Nombre de los alumnos de Madrid con sus asignaturas y sus notas*/
+SELECT a.apenom AS alumno, 
+       s.nombre AS asignatura, 
+       n.nota
+FROM alumnos a
+JOIN notas n USING (DNI)
+JOIN asignaturas s USING (COD)
+WHERE a.pobla = 'Madrid';
+/*12. Media de las notas de cada alumno*/
+SELECT a.APENOM, AVG(n.NOTA) AS media_notas
+FROM alumnos a
+JOIN notas n USING (dni)
+GROUP BY a.DNI, a.APENOM;
+/*13. Media de las notas de cada asignatura ordenado por orden de asignatura*/
+SELECT s.NOMBRE AS asignatura, AVG(n.NOTA) AS media_notas
+FROM asignaturas s
+JOIN notas n USING (cod)
+GROUP BY s.COD, s.NOMBRE
+ORDER BY s.NOMBRE;
+/*14. Nombre de las asignaturas que tienen más de 1 alumno matriculado.*/
+SELECT s.NOMBRE AS asignatura
+FROM asignaturas s
+JOIN notas n USING (cod)
+GROUP BY s.COD, s.NOMBRE
+HAVING COUNT(DISTINCT n.DNI) > 1;
+/*15. Nombre de las asignaturas en las que está matriculada Elena.*/
+SELECT s.NOMBRE AS asignatura
+FROM asignaturas s
+JOIN notas n ON s.COD = n.COD
+JOIN alumnos a ON n.DNI = a.DNI
+WHERE a.APENOM = 'Alcalde García, Elena';
+/*16. Contar cuantos alumnos hay matriculados en cada asignatura*/
+SELECT s.NOMBRE AS asignatura, COUNT(DISTINCT n.DNI) AS num_alumnos
+FROM asignaturas s
+JOIN notas n ON s.COD = n.COD
+GROUP BY s.COD, s.NOMBRE;
+/*17. Usuarios ordenados por Código Postal y localidad*/
+SELECT *
+FROM usuarios
+ORDER BY CP, LOCALIDAD;
+/*18. Códigos de los usuarios matriculados en karate*/
+SELECT a.NUM_SOCIO
+FROM actividades_usuarios a JOIN actividades ac ON a.CODIGO_ACTIVIDAD = ac.CODIGO_ACTIVIDAD
+WHERE DESCRIPCION = 'KARATE';
+/*19. Usuarios matriculados en karate*/
+SELECT u.*
+FROM usuarios u JOIN actividades_usuarios a ON u.NUM_SOCIO = a.NUM_SOCIO JOIN actividades ac ON a.CODIGO_ACTIVIDAD = ac.CODIGO_ACTIVIDAD
+WHERE DESCRIPCION = 'KARATE';
+/*20. Lista de los clientes con los bancos donde trabajan*/
+SELECT U.NUM_SOCIO, U.NOMBRE, U.APELLIDOS, B.NOMBRE AS BANCO
+FROM USUARIOS U JOIN BANCOS B ON U.CODIGO_BANCO = B.ENT_SUC;
+/*21. Lista de los clientes con sus actividades*/
+SELECT U.NUM_SOCIO, U.DNI, U.NOMBRE, U.APELLIDOS, AC.DESCRIPCION
+FROM USUARIOS U JOIN actividades_usuarios A ON U.NUM_SOCIO = A.NUM_SOCIO JOIN actividades AC ON A.CODIGO_ACTIVIDAD = AC.CODIGO_ACTIVIDAD;
+/*22. Códigos de los usuarios con la suma de sus cuotas*/
+SELECT NUM_SOCIO, SUM(CUOTA) AS CUOTA_TOTAL
+FROM pagos
+GROUP BY NUM_SOCIO;
+/*23. Códigos , apellidos y nombres de los usuarios con la suma de sus cuotas de las actividades*/
+SELECT U.NUM_SOCIO, APELLIDOS, NOMBRE, SUM(CUOTA) AS CUOTA_TOTAL
+FROM PAGOS P JOIN USUARIOS U ON P.NUM_SOCIO = U.NUM_SOCIO
+GROUP BY NUM_SOCIO;
+/*24. Códigos de los bancos en los que se ingresan en concepto de cuota de socios más de 100€ (visualizar también la cantidad)*/
+SELECT CODIGO_BANCO, SUM(CUOTA) AS CUOTA_TOTAL
+FROM USUARIOS U JOIN PAGOS P ON P.NUM_SOCIO = U.NUM_SOCIO
+GROUP BY CODIGO_BANCO
+HAVING CUOTA_TOTAL > 100;
+/*25. Nombres y códigos de los bancos en los que se ingresan en concepto de cuota de socios más de 100€(visualizar también la cantidad)*/
+SELECT B.NOMBRE, ENT_SUC, SUM(CUOTA) AS CUOTA_TOTAL
+FROM BANCOS B JOIN USUARIOS U ON U.CODIGO_BANCO = B.ENT_SUC JOIN PAGOS P ON P.NUM_SOCIO = U.NUM_SOCIO
+GROUP BY ENT_SUC
+HAVING CUOTA_TOTAL > 100;
+/*26. Usuarios ordenados por lo que han pagado hasta el momento de mayor a menor*/
+SELECT U.NUM_SOCIO, DNI, NOMBRE, APELLIDOS, SUM(CUOTA) AS PAGADO
+FROM USUARIOS U JOIN PAGOS P ON U.NUM_SOCIO = P.NUM_SOCIO
+GROUP BY U.NUM_SOCIO
+ORDER BY PAGADO DESC;
+/*27. Clientes que trabajan con bancos. (usando consultas simples y con JOIN)*/
+SELECT U.DNI, U.NOMBRE, U.APELLIDOS
+FROM USUARIOS U JOIN BANCOS B ON U.CODIGO_BANCO = B.ENT_SUC;
+
+SELECT U.DNI, U.NOMBRE, U.APELLIDOS
+FROM USUARIOS U
+WHERE CODIGO_BANCO IS NOT NULL;
+/*28. Selecciona las actividades cuya cuota es inferior
+ a la media de las cuotas de los usuarios que no tienen cuota familiar*/
+ SELECT A.*
+ FROM ACTIVIDADES A 
+ WHERE A.CUOTA < (SELECT AVG(CUOTA_SOCIO) FROM USUARIOS WHERE CUOTA_FAMILIAR IS NULL);
+/*29. Mostrar cuantos alumnos hay en cada actividad*/
+SELECT A.DESCRIPCION, COUNT(AC.NUM_SOCIO) AS NUM_ALUMNOS
+FROM ACTIVIDADES A JOIN ACTIVIDADES_USUARIOS AC ON A.CODIGO_ACTIVIDAD = AC.CODIGO_ACTIVIDAD
+GROUP BY A.DESCRIPCION;
+/*30. Mostrar el número de meses que lleva cada alumno en cada actividad(si no se han dado de baja)*/
+SELECT AC.NUM_SOCIO, U.NOMBRE, U.APELLIDOS, AC.CODIGO_ACTIVIDAD, A.DESCRIPCION, TIMESTAMPDIFF(MONTH, AC.FECHA_ALTA, CURDATE()) AS MESES_APUNTADO
+FROM ACTIVIDADES_USUARIOS AC JOIN ACTIVIDADES A ON AC.CODIGO_ACTIVIDAD= A.CODIGO_ACTIVIDAD JOIN USUARIOS U ON AC.NUM_SOCIO = U.NUM_SOCIO
+WHERE AC.FECHA_BAJA IS NULL;
+/*31. Usuarios con el número de cuotas pagadas y la media de las cuotas*/
+SELECT U.DNI, U.NOMBRE, U.APELLIDOS, COUNT(CUOTA) AS CUOTAS_PAGADAS, AVG(CUOTA) AS MEDIA_CUOTAS
+FROM USUARIOS U JOIN PAGOS P ON U.NUM_SOCIO = P.NUM_SOCIO
+GROUP BY U.NUM_SOCIO;
+/*32. Actividades en las que está matriculado Juan Luis Arias Alvarez*/
+SELECT AC.CODIGO_ACTIVIDAD, A.DESCRIPCION
+FROM ACTIVIDADES_USUARIOS AC JOIN USUARIOS U ON AC.NUM_SOCIO = U.NUM_SOCIO JOIN ACTIVIDADES A ON AC.CODIGO_ACTIVIDAD = A.CODIGO_ACTIVIDAD
+WHERE U.NOMBRE = 'Juan Luis'
+  AND U.APELLIDOS = 'Arias Alvarez'
+  AND AC.FECHA_BAJA IS NULL;
